@@ -1,8 +1,3 @@
-Perfeito — aqui tens um README.md em inglês, com uma introdução clara e profissional, pronto para usares no repositório.
-
-Podes copiar diretamente.
-
-DevDrawer
 🧩 Introduction
 
 DevDrawer is a full stack web application designed to help developers and teams plan, structure, and organize software projects in a visual and intuitive way.
