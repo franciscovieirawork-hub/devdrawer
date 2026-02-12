@@ -11,6 +11,7 @@
   --background: #f5f5f4;
   --foreground: #18181b;
   --card: #ffffff;
+  --card-popup: #ffffff;
   --card-foreground: #18181b;
   --muted: #f4f4f5;
   --muted-foreground: #71717a;
@@ -30,6 +31,7 @@
   --background: #0c0c0c;
   --foreground: #fafafa;
   --card: rgba(255, 255, 255, 0.04);
+  --card-popup: #18181b;
   --card-foreground: #fafafa;
   --muted: #1a1a1a;
   --muted-foreground: #a1a1aa;

@@ -92,7 +92,7 @@ export function CreatePlannerPopover({ onCreated }: CreatePlannerPopoverProps) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-72 p-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-lg z-50">
+        <div className="absolute right-0 top-full mt-2 w-72 p-4 rounded-2xl border border-[var(--border)] bg-[color:var(--card-popup)] shadow-lg z-50">
           <form onSubmit={handleSubmit}>
             <input
               ref={inputRef}

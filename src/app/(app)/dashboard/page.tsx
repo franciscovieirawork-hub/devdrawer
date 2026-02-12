@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CreatePlannerPopover } from "@/components/CreatePlannerPopover";
+import { PlannerCardMenu } from "@/components/PlannerCardMenu";
 
 interface Planner {
   id: string;
@@ -26,6 +27,10 @@ export default function DashboardPage() {
   const [planners, setPlanners] = useState<Planner[]>([]);
   const [sortBy, setSortBy] = useState<SortBy>("date");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [duplicating, setDuplicating] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState<string>("");
+  const renameInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -56,6 +61,13 @@ export default function DashboardPage() {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    if (renaming && renameInputRef.current) {
+      renameInputRef.current.focus();
+      renameInputRef.current.select();
+    }
+  }, [renaming]);
+
   const sortedPlanners = [...planners].sort((a, b) => {
     if (sortBy === "name") {
       return a.title.localeCompare(b.title);
@@ -72,6 +84,54 @@ export default function DashboardPage() {
       }
     } finally {
       setDeleting(null);
+    }
+  }
+
+  async function handleDuplicate(id: string) {
+    setDuplicating(id);
+    try {
+      const res = await fetch(`/api/planner/${id}`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setPlanners((prev) => [data.planner, ...prev]);
+        router.push(`/planner/${data.planner.id}`);
+      }
+    } finally {
+      setDuplicating(null);
+    }
+  }
+
+  function handleRenameClick(id: string) {
+    const planner = planners.find((p) => p.id === id);
+    if (planner) {
+      setRenaming(id);
+      setRenameValue(planner.title);
+    }
+  }
+
+  async function handleRenameSave(id: string) {
+    const newTitle = renameValue.trim();
+    if (!newTitle) {
+      setRenaming(null);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/planner/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTitle }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setPlanners((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, title: data.planner.title } : p))
+        );
+      }
+    } finally {
+      setRenaming(null);
+      setRenameValue("");
     }
   }
 
@@ -160,48 +220,55 @@ export default function DashboardPage() {
               key={planner.id}
               className="group relative p-5 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:border-[var(--muted-foreground)]/30 transition-all"
             >
-              <Link
-                href={`/planner/${planner.id}`}
-                className="block"
-              >
-                <h3 className="font-semibold text-[var(--card-foreground)]">
-                  {planner.title}
-                </h3>
-                {planner.description && (
-                  <p className="text-sm text-[var(--muted-foreground)] mt-1.5 line-clamp-2">
-                    {planner.description}
-                  </p>
-                )}
-                <p className="text-xs text-[var(--muted-foreground)] mt-4">
-                  {new Date(planner.createdAt).toLocaleDateString("en-GB")}
-                </p>
-              </Link>
-
-              {/* Delete button */}
-              <button
-                onClick={() => handleDelete(planner.id)}
-                disabled={deleting === planner.id}
-                className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 text-[var(--muted-foreground)] hover:text-[var(--destructive)] hover:bg-[var(--muted)] transition-all"
-                title="Delete planner"
-              >
-                {deleting === planner.id ? (
-                  <div className="w-3.5 h-3.5 rounded-full border-2 border-transparent border-t-current animate-spin" />
-                ) : (
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
+              {renaming === planner.id ? (
+                <input
+                  ref={renameInputRef}
+                  type="text"
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onBlur={() => handleRenameSave(planner.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleRenameSave(planner.id);
+                    } else if (e.key === "Escape") {
+                      setRenaming(null);
+                      setRenameValue("");
+                    }
+                  }}
+                  className="w-full px-2 py-1 text-sm font-semibold text-[var(--card-foreground)] bg-[var(--background)] border border-[var(--accent)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  placeholder={planner.title}
+                />
+              ) : (
+                <>
+                  <Link
+                    href={`/planner/${planner.id}`}
+                    className="block"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    <h3 className="font-semibold text-[var(--card-foreground)] pr-8">
+                      {planner.title}
+                    </h3>
+                    {planner.description && (
+                      <p className="text-sm text-[var(--muted-foreground)] mt-1.5 line-clamp-2">
+                        {planner.description}
+                      </p>
+                    )}
+                    <p className="text-xs text-[var(--muted-foreground)] mt-4">
+                      {new Date(planner.createdAt).toLocaleDateString("en-GB")}
+                    </p>
+                  </Link>
+
+                  {/* Menu */}
+                  <div className="absolute top-3 right-3">
+                    <PlannerCardMenu
+                      plannerId={planner.id}
+                      onRename={() => handleRenameClick(planner.id)}
+                      onDuplicate={() => handleDuplicate(planner.id)}
+                      onDelete={() => handleDelete(planner.id)}
+                      isDeleting={deleting === planner.id}
                     />
-                  </svg>
-                )}
-              </button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>

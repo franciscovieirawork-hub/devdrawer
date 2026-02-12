@@ -8,6 +8,7 @@ interface AppStore {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
+  getThemeImage: () => string;
 
   // Global loader
   isLoading: boolean;
@@ -25,6 +26,12 @@ export const useAppStore = create<AppStore>()(
       setTheme: (theme) => set({ theme }),
       toggleTheme: () =>
         set({ theme: get().theme === "light" ? "dark" : "light" }),
+      getThemeImage: () => {
+        const currentTheme = get().theme;
+        return currentTheme === "dark" 
+          ? "/assets/intro_lightmode.png"
+          : "/assets/intro_darkmode.png";
+      },
 
       isLoading: false,
       setLoading: (isLoading) => set({ isLoading }),

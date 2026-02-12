@@ -42,43 +42,60 @@ export default function LoginPage() {
 
   return (
     <div className="w-full">
-      <h2 className="text-3xl font-bold tracking-tight text-[var(--foreground)] mb-8 text-center">
-        Welcome back
-      </h2>
+      <div className="mb-8 text-center lg:text-left">
+        <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-[var(--foreground)] mb-2">
+          Welcome back
+        </h2>
+        <p className="text-sm text-[var(--muted-foreground)]">
+          Sign in to continue to your workspace
+        </p>
+      </div>
 
       {error && (
-        <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-sm text-center">
+        <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-sm text-center lg:text-left">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <input
-          name="identifier"
-          type="text"
-          required
-          className="w-full h-14 px-5 rounded-2xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-base placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-all"
-          placeholder="Email or username"
-        />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <input
+            name="identifier"
+            type="text"
+            required
+            className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
+            placeholder="Email or username"
+          />
+        </div>
 
-        <input
-          name="password"
-          type="password"
-          required
-          className="w-full h-14 px-5 rounded-2xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-base placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-all"
-          placeholder="Password"
-        />
+        <div>
+          <input
+            name="password"
+            type="password"
+            required
+            className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
+            placeholder="Password"
+          />
+          <div className="mt-2 text-right">
+            <Link
+              href="/forgot-password"
+              className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-14 bg-[var(--foreground)] text-[var(--background)] text-base font-medium rounded-2xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="w-full h-12 bg-[var(--foreground)] text-[var(--background)] text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-6"
         >
           {loading ? "Signing in..." : "Sign in"}
         </button>
       </form>
 
-      <p className="mt-8 text-center text-sm text-[var(--muted-foreground)]">
+      <p className="mt-6 text-center text-sm text-[var(--muted-foreground)]">
         Don&apos;t have an account?{" "}
         <Link
           href="/register"

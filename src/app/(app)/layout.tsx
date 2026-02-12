@@ -1,5 +1,6 @@
 import { deleteSession, getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function AppLayout({
@@ -23,13 +24,16 @@ export default async function AppLayout({
     <div className="min-h-screen bg-[var(--background)]">
       <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <h1 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+          <a href="/dashboard" className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
             devdrawer
-          </h1>
+          </a>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-[var(--muted-foreground)] hidden sm:inline">
+            <Link
+              href="/profile"
+              className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] hidden sm:inline transition-colors"
+            >
               @{user.username}
-            </span>
+            </Link>
             <ThemeToggle />
             <form action={handleLogout}>
               <button

@@ -1,37 +1,49 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { validatePassword } from "@/lib/password-validation-client";
 
-export default function RegisterPage() {
+export default function ResetPasswordPage() {
   const router = useRouter();
-  const [error, setError] = useState("");
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!token) {
+      setError("Invalid reset link.");
+    }
+  }, [token]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const username = formData.get("username") as string;
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    if (password !== confirmPassword) {
+      setError("Passwords don't match.");
+      return;
+    }
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
       setError(passwordValidation.error || "Invalid password.");
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
+
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ token, password }),
       });
 
       const data = await res.json();
@@ -41,7 +53,10 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/dashboard");
+      setSuccess(true);
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
     } catch {
       setError("Connection error.");
     } finally {
@@ -49,14 +64,52 @@ export default function RegisterPage() {
     }
   }
 
+  if (success) {
+    return (
+      <div className="w-full text-center lg:text-left">
+        <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-[var(--foreground)] mb-2">
+          Password reset!
+        </h2>
+        <p className="text-sm text-[var(--muted-foreground)] mb-6">
+          Your password has been reset. Redirecting to login...
+        </p>
+        <Link
+          href="/login"
+          className="text-sm text-[var(--foreground)] hover:underline font-medium"
+        >
+          Go to login
+        </Link>
+      </div>
+    );
+  }
+
+  if (!token) {
+    return (
+      <div className="w-full text-center lg:text-left">
+        <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-[var(--foreground)] mb-2">
+          Invalid link
+        </h2>
+        <p className="text-sm text-[var(--muted-foreground)] mb-6">
+          This password reset link is invalid or has expired.
+        </p>
+        <Link
+          href="/forgot-password"
+          className="text-sm text-[var(--foreground)] hover:underline font-medium"
+        >
+          Request a new one
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       <div className="mb-8 text-center lg:text-left">
         <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-[var(--foreground)] mb-2">
-          Create account
+          Reset password
         </h2>
         <p className="text-sm text-[var(--muted-foreground)]">
-          Start planning your projects today
+          Enter your new password
         </p>
       </div>
 
@@ -69,33 +122,27 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <input
-            name="username"
-            type="text"
-            required
-            minLength={3}
-            className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
-            placeholder="Username"
-          />
-        </div>
-
-        <div>
-          <input
-            name="email"
-            type="email"
-            required
-            className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
-            placeholder="Email"
-          />
-        </div>
-
-        <div>
-          <input
             name="password"
             type="password"
             required
             minLength={10}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
-            placeholder="Password (min 10 chars: uppercase, lowercase, number, special)"
+            placeholder="New password"
+          />
+        </div>
+
+        <div>
+          <input
+            name="confirmPassword"
+            type="password"
+            required
+            minLength={10}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
+            placeholder="Confirm password"
           />
         </div>
 
@@ -104,17 +151,16 @@ export default function RegisterPage() {
           disabled={loading}
           className="w-full h-12 bg-[var(--foreground)] text-[var(--background)] text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-6"
         >
-          {loading ? "Creating..." : "Create account"}
+          {loading ? "Resetting..." : "Reset password"}
         </button>
       </form>
 
       <p className="mt-6 text-center text-sm text-[var(--muted-foreground)]">
-        Already have an account?{" "}
         <Link
           href="/login"
           className="text-[var(--foreground)] hover:underline font-medium"
         >
-          Sign in
+          Back to login
         </Link>
       </p>
     </div>

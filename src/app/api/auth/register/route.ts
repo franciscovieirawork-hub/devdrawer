@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
+import { sendVerificationEmail } from "@/lib/email";
+import { validatePassword } from "@/lib/password-validation";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -28,9 +31,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (password.length < 6) {
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
       return NextResponse.json(
-        { error: "Password must be at least 6 characters." },
+        { error: passwordValidation.error },
         { status: 400 }
       );
     }
@@ -58,19 +62,29 @@ export async function POST(request: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
+    const verificationToken = randomBytes(32).toString("hex");
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     const user = await prisma.user.create({
       data: {
         username: username.toLowerCase(),
         email: email.toLowerCase(),
         passwordHash,
+        verificationToken,
+        verificationTokenExpires,
       },
     });
+
+    // Send verification email (don't await - send in background)
+    sendVerificationEmail(user.email, verificationToken).catch(console.error);
 
     await createSession(user.id);
 
     return NextResponse.json(
-      { user: { id: user.id, email: user.email, username: user.username } },
+      { 
+        user: { id: user.id, email: user.email, username: user.username },
+        message: "Account created. Please check your email to verify your account."
+      },
       { status: 201 }
     );
   } catch {

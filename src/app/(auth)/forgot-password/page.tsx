@@ -1,37 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { validatePassword } from "@/lib/password-validation-client";
 
-export default function RegisterPage() {
-  const router = useRouter();
-  const [error, setError] = useState("");
+export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const username = formData.get("username") as string;
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      setError(passwordValidation.error || "Invalid password.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ email }),
       });
 
       const data = await res.json();
@@ -41,7 +28,7 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/dashboard");
+      setSent(true);
     } catch {
       setError("Connection error.");
     } finally {
@@ -49,14 +36,33 @@ export default function RegisterPage() {
     }
   }
 
+  if (sent) {
+    return (
+      <div className="w-full text-center lg:text-left">
+        <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-[var(--foreground)] mb-2">
+          Check your email
+        </h2>
+        <p className="text-sm text-[var(--muted-foreground)] mb-6">
+          If an account exists, we&apos;ve sent a password reset link to <strong>{email}</strong>
+        </p>
+        <Link
+          href="/login"
+          className="text-sm text-[var(--foreground)] hover:underline font-medium"
+        >
+          Back to login
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       <div className="mb-8 text-center lg:text-left">
         <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-[var(--foreground)] mb-2">
-          Create account
+          Forgot password?
         </h2>
         <p className="text-sm text-[var(--muted-foreground)]">
-          Start planning your projects today
+          Enter your email and we&apos;ll send you a reset link
         </p>
       </div>
 
@@ -69,33 +75,13 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <input
-            name="username"
-            type="text"
-            required
-            minLength={3}
-            className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
-            placeholder="Username"
-          />
-        </div>
-
-        <div>
-          <input
             name="email"
             type="email"
             required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
             placeholder="Email"
-          />
-        </div>
-
-        <div>
-          <input
-            name="password"
-            type="password"
-            required
-            minLength={10}
-            className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
-            placeholder="Password (min 10 chars: uppercase, lowercase, number, special)"
           />
         </div>
 
@@ -104,12 +90,12 @@ export default function RegisterPage() {
           disabled={loading}
           className="w-full h-12 bg-[var(--foreground)] text-[var(--background)] text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-6"
         >
-          {loading ? "Creating..." : "Create account"}
+          {loading ? "Sending..." : "Send reset link"}
         </button>
       </form>
 
       <p className="mt-6 text-center text-sm text-[var(--muted-foreground)]">
-        Already have an account?{" "}
+        Remember your password?{" "}
         <Link
           href="/login"
           className="text-[var(--foreground)] hover:underline font-medium"
