@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CreatePlannerPopover } from "@/components/CreatePlannerPopover";
 import { PlannerCardMenu } from "@/components/PlannerCardMenu";
+import Footer from "@/components/Footer";
 
 interface Planner {
   id: string;
@@ -273,6 +274,7 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
+      <Footer />
     </div>
   );
 }

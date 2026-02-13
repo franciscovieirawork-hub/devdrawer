@@ -40,7 +40,7 @@ export function PlannerCardMenu({
           e.stopPropagation();
           setOpen(!open);
         }}
-        className="w-8 h-8 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-all"
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-all"
         title="More options"
       >
         <svg

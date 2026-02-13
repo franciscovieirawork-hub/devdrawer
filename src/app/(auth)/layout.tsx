@@ -1,5 +1,6 @@
 "use client"
 
+import Footer from "@/components/Footer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAppStore } from "@/store/app";
 
@@ -50,6 +51,7 @@ export default function AuthLayout({
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
