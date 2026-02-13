@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
 import { sendVerificationEmail } from "@/lib/email";
 import { validatePassword } from "@/lib/password-validation";
+import { isValidEmail } from "@/lib/email-validation";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
@@ -13,6 +14,13 @@ export async function POST(request: Request) {
     if (!username || !email || !password) {
       return NextResponse.json(
         { error: "All fields are required." },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidEmail(email)) {
+      return NextResponse.json(
+        { error: "Please enter a valid email address." },
         { status: 400 }
       );
     }

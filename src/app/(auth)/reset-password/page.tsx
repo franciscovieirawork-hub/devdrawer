@@ -1,68 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "@/hooks/useForm";
 import { validatePassword } from "@/lib/password-validation-client";
+
+const initialValues = { password: "", confirmPassword: "" };
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!token) {
-      setError("Invalid reset link.");
-    }
-  }, [token]);
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError("");
-
-    if (password !== confirmPassword) {
-      setError("Passwords don't match.");
-      return;
-    }
-
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      setError(passwordValidation.error || "Invalid password.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
+  const form = useForm({
+    initialValues,
+    validate: (values) => {
+      const errors: Partial<Record<keyof typeof initialValues, string>> = {};
+      if (values.password !== values.confirmPassword)
+        errors.confirmPassword = "Passwords don't match.";
+      else if (values.password) {
+        const p = validatePassword(values.password);
+        if (!p.isValid) errors.password = p.error || "Invalid password.";
+      }
+      return errors;
+    },
+    onSubmit: async (values) => {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ token, password: values.password }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Something went wrong.");
+        form.setError(data.error || "Something went wrong.");
         return;
       }
-
       setSuccess(true);
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
-    } catch {
-      setError("Connection error.");
-    } finally {
-      setLoading(false);
-    }
-  }
+      setTimeout(() => router.push("/login"), 2000);
+    },
+  });
 
   if (success) {
     return (
@@ -113,21 +91,19 @@ export default function ResetPasswordPage() {
         </p>
       </div>
 
-      {error && (
+      {form.error && (
         <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-sm text-center lg:text-left">
-          {error}
+          {form.error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={form.handleSubmit} className="space-y-4">
         <div>
           <input
             name="password"
             type="password"
-            required
-            minLength={10}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={form.values.password}
+            onChange={form.handleChange("password")}
             className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
             placeholder="New password"
           />
@@ -137,10 +113,8 @@ export default function ResetPasswordPage() {
           <input
             name="confirmPassword"
             type="password"
-            required
-            minLength={10}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            value={form.values.confirmPassword}
+            onChange={form.handleChange("confirmPassword")}
             className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
             placeholder="Confirm password"
           />
@@ -148,10 +122,10 @@ export default function ResetPasswordPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={form.loading}
           className="w-full h-12 bg-[var(--foreground)] text-[var(--background)] text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-6"
         >
-          {loading ? "Resetting..." : "Reset password"}
+          {form.loading ? "Resetting..." : "Reset password"}
         </button>
       </form>
 

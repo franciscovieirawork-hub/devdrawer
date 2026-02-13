@@ -21,8 +21,8 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-md">
+    <div className="h-screen flex flex-col bg-[var(--background)] overflow-hidden">
+      <header className="shrink-0 z-50 border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <a href="/dashboard" className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
             devdrawer
@@ -46,7 +46,7 @@ export default async function AppLayout({
           </div>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto p-6">{children}</main>
+      <main className="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto p-6 w-full">{children}</main>
     </div>
   );
 }

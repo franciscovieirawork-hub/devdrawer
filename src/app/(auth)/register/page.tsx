@@ -1,53 +1,58 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "@/hooks/useForm";
 import { validatePassword } from "@/lib/password-validation-client";
+import { isValidEmail } from "@/lib/email-validation-client";
+
+const initialValues = {
+  username: "",
+  email: "",
+  password: "",
+};
+
+function validate(values: typeof initialValues) {
+  const errors: Partial<Record<keyof typeof initialValues, string>> = {};
+  if (!values.username?.trim()) errors.username = "Username is required.";
+  else if (values.username.length < 3)
+    errors.username = "Username must be at least 3 characters.";
+  else if (!/^[a-zA-Z0-9_]+$/.test(values.username))
+    errors.username = "Username can only contain letters, numbers and underscores.";
+  if (!values.email?.trim()) errors.email = "Email is required.";
+  else if (!isValidEmail(values.email))
+    errors.email = "Please enter a valid email address.";
+  if (!values.password) errors.password = "Password is required.";
+  else {
+    const p = validatePassword(values.password);
+    if (!p.isValid) errors.password = p.error;
+  }
+  return errors;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const username = formData.get("username") as string;
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      setError(passwordValidation.error || "Invalid password.");
-      setLoading(false);
-      return;
-    }
-
-    try {
+  const form = useForm({
+    initialValues,
+    validate,
+    onSubmit: async (values) => {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({
+          username: values.username.trim(),
+          email: values.email.trim(),
+          password: values.password,
+        }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Something went wrong.");
+        form.setError(data.error || "Something went wrong.");
         return;
       }
-
       router.push("/dashboard");
-    } catch {
-      setError("Connection error.");
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+  });
 
   return (
     <div className="w-full">
@@ -60,19 +65,19 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      {error && (
+      {form.error && (
         <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-sm text-center lg:text-left">
-          {error}
+          {form.error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={form.handleSubmit} className="space-y-4">
         <div>
           <input
             name="username"
             type="text"
-            required
-            minLength={3}
+            value={form.values.username}
+            onChange={form.handleChange("username")}
             className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
             placeholder="Username"
           />
@@ -82,7 +87,8 @@ export default function RegisterPage() {
           <input
             name="email"
             type="email"
-            required
+            value={form.values.email}
+            onChange={form.handleChange("email")}
             className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
             placeholder="Email"
           />
@@ -92,8 +98,8 @@ export default function RegisterPage() {
           <input
             name="password"
             type="password"
-            required
-            minLength={10}
+            value={form.values.password}
+            onChange={form.handleChange("password")}
             className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
             placeholder="Password (min 10 chars: uppercase, lowercase, number, special)"
           />
@@ -101,10 +107,10 @@ export default function RegisterPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={form.loading}
           className="w-full h-12 bg-[var(--foreground)] text-[var(--background)] text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-6"
         >
-          {loading ? "Creating..." : "Create account"}
+          {form.loading ? "Creating..." : "Create account"}
         </button>
       </form>
 

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { validatePassword } from "@/lib/password-validation";
+import { isValidEmail } from "@/lib/email-validation";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
@@ -68,6 +69,13 @@ export async function PATCH(request: Request) {
     }
 
     if (body.email !== undefined && body.email !== user.email) {
+      if (!isValidEmail(body.email)) {
+        return NextResponse.json(
+          { error: "Please enter a valid email address." },
+          { status: 400 }
+        );
+      }
+
       const existing = await prisma.user.findUnique({
         where: { email: body.email.toLowerCase() },
       });

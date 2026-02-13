@@ -39,6 +39,7 @@ export function CreatePlannerPopover({ onCreated }: CreatePlannerPopoverProps) {
   }, [open]);
 
   async function handleSubmit(e: React.FormEvent) {
+
     e.preventDefault();
     if (!title.trim()) return;
 
@@ -51,7 +52,6 @@ export function CreatePlannerPopover({ onCreated }: CreatePlannerPopoverProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: title.trim() }),
       });
-
       const data = await res.json();
 
       if (!res.ok) {
@@ -59,9 +59,9 @@ export function CreatePlannerPopover({ onCreated }: CreatePlannerPopoverProps) {
         return;
       }
 
+      onCreated(data.planner);
       setOpen(false);
       setTitle("");
-      onCreated(data.planner);
     } catch {
       setError("Connection error.");
     } finally {
@@ -98,6 +98,7 @@ export function CreatePlannerPopover({ onCreated }: CreatePlannerPopoverProps) {
               ref={inputRef}
               type="text"
               value={title}
+              readOnly={loading}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Planner name"
               className="w-full h-11 px-4 rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-all"

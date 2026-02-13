@@ -1,44 +1,32 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "@/hooks/useForm";
+
+const initialValues = { identifier: "", password: "" };
 
 export default function LoginPage() {
   const router = useRouter();
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const identifier = formData.get("identifier") as string;
-    const password = formData.get("password") as string;
-
-    try {
+  const form = useForm({
+    initialValues,
+    onSubmit: async (values) => {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({
+          identifier: values.identifier,
+          password: values.password,
+        }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Something went wrong.");
+        form.setError(data.error || "Something went wrong.");
         return;
       }
-
       router.push("/dashboard");
-    } catch {
-      setError("Connection error.");
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+  });
 
   return (
     <div className="w-full">
@@ -51,18 +39,19 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {error && (
+      {form.error && (
         <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-sm text-center lg:text-left">
-          {error}
+          {form.error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={form.handleSubmit} className="space-y-4">
         <div>
           <input
             name="identifier"
             type="text"
-            required
+            value={form.values.identifier}
+            onChange={form.handleChange("identifier")}
             className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
             placeholder="Email or username"
           />
@@ -72,7 +61,8 @@ export default function LoginPage() {
           <input
             name="password"
             type="password"
-            required
+            value={form.values.password}
+            onChange={form.handleChange("password")}
             className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
             placeholder="Password"
           />
@@ -88,10 +78,10 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={form.loading}
           className="w-full h-12 bg-[var(--foreground)] text-[var(--background)] text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-2"
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {form.loading ? "Signing in..." : "Sign in"}
         </button>
       </form>
 

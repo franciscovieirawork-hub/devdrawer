@@ -2,39 +2,38 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useForm } from "@/hooks/useForm";
+import { isValidEmail } from "@/lib/email-validation-client";
+
+const initialValues = { email: "" };
+
+function validate(values: typeof initialValues) {
+  const errors: Partial<Record<keyof typeof initialValues, string>> = {};
+  if (!values.email?.trim()) errors.email = "Email is required.";
+  else if (!isValidEmail(values.email.trim()))
+    errors.email = "Please enter a valid email address.";
+  return errors;
+}
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState("");
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
+  const form = useForm({
+    initialValues,
+    validate,
+    onSubmit: async (values) => {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: values.email.trim() }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Something went wrong.");
+        form.setError(data.error || "Something went wrong.");
         return;
       }
-
       setSent(true);
-    } catch {
-      setError("Connection error.");
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+  });
 
   if (sent) {
     return (
@@ -43,7 +42,8 @@ export default function ForgotPasswordPage() {
           Check your email
         </h2>
         <p className="text-sm text-[var(--muted-foreground)] mb-6">
-          If an account exists, we&apos;ve sent a password reset link to <strong>{email}</strong>
+          If an account exists, we&apos;ve sent a password reset link to{" "}
+          <strong>{form.values.email}</strong>
         </p>
         <Link
           href="/login"
@@ -66,20 +66,19 @@ export default function ForgotPasswordPage() {
         </p>
       </div>
 
-      {error && (
+      {form.error && (
         <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-sm text-center lg:text-left">
-          {error}
+          {form.error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={form.handleSubmit} className="space-y-4">
         <div>
           <input
             name="email"
             type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={form.values.email}
+            onChange={form.handleChange("email")}
             className="w-full h-12 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
             placeholder="Email"
           />
@@ -87,10 +86,10 @@ export default function ForgotPasswordPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={form.loading}
           className="w-full h-12 bg-[var(--foreground)] text-[var(--background)] text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-6"
         >
-          {loading ? "Sending..." : "Send reset link"}
+          {form.loading ? "Sending..." : "Send reset link"}
         </button>
       </form>
 

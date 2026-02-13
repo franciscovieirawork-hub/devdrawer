@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { isValidEmail } from "@/lib/email-validation";
 import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 
@@ -10,6 +11,13 @@ export async function POST(request: Request) {
     if (!email) {
       return NextResponse.json(
         { error: "Email is required." },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidEmail(email)) {
+      return NextResponse.json(
+        { error: "Please enter a valid email address." },
         { status: 400 }
       );
     }
