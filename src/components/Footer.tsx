@@ -5,7 +5,7 @@ const Footer = () => {
         created by{" "}
         <a
           className="text-[var(--foreground)] hover:underline"
-          href="https://f-vdev.vercel.app/"
+          href="https://fvdev.vercel.app/"
           target="_blank"
           rel="noopener noreferrer"
         >
